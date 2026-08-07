@@ -1,0 +1,59 @@
+name: Build Base APK
+
+on:
+  push:
+    paths: ['factory/android/**', '.github/workflows/build-base-apk.yml']
+  pull_request:
+    paths: ['factory/android/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin LTS)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: actions/setup-android@v4
+        with:
+          api-level: 36
+          build-tools: 35.0.0
+
+      - name: Set up Gradle (cached)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        working-directory: factory/android
+        run: ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Sign base APK (uber-apk-signer v1.3.0)
+        working-directory: factory/android
+        run: |
+          wget -q https://github.com/patrickfav/uber-apk-signer/releases/download/v1.3.0/uber-apk-signer-1.3.0.jar
+          java -jar uber-apk-signer-1.3.0.jar --apks app/build/outputs/apk/debug/app-debug.apk --allowResign
+          cp app/build/outputs/apk/debug/app-debug-aligned-debugSigned.apk ../../factory/baseApp/base.apk
+
+      - name: Commit rebuilt base APK
+        run: |
+          git config user.name "phantom-ci"
+          git config user.email "ci@phantom.local"
+          git add factory/baseApp/base.apk
+          git diff --cached --quiet || git commit -m "chore: rebuild base.apk [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: base-apk
+          path: factory/baseApp/base.apk
