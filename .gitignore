@@ -1,0 +1,9 @@
+node_modules/
+dist/
+data/
+*.db
+*.apk
+!factory/baseApp/base.apk
+keystore*
+.env
+.DS_Store
