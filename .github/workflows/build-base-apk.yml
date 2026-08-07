@@ -52,8 +52,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+      - name: Set up Gradle 8.13
+        uses: gradle/actions/setup-gradle@v4
         with:
-          name: base-apk
-          path: factory/baseApp/base.apk
+          gradle-version: '8.13'
+
+      - name: Ensure wrapper + build
+        working-directory: factory/android
+        run: |
+          [ -f gradlew ] || gradle wrapper --gradle-version 8.13
+          ./gradlew :app:assembleDebug --no-daemon
