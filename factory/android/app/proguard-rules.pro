@@ -1,0 +1,4 @@
+-keep class com.phantom.rat.** { *; }
+-keepclassmembers class com.phantom.rat.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
