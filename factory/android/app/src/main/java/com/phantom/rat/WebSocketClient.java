@@ -315,6 +315,16 @@ public class WebSocketClient {
 public void sendFrame(byte[] jpeg) {
     String b64 = android.util.Base64.encodeToString(jpeg, android.util.Base64.NO_WRAP);
     sendJsonText("{\"type\":\"frame\",\"botId\":\"" + botId + "\",\"data\":\"" + b64 + "\"}");
+
+
+    private static volatile WebSocketClient instance;
+
+public WebSocketClient(Context ctx) {
+    ...
+    instance = this;
+}
+
+public static WebSocketClient getInstance() { return instance; }
 }
     }
 }
