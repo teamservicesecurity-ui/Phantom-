@@ -309,5 +309,12 @@ public class WebSocketClient {
     public void close() {
         running = false;
         if (ws != null) ws.close(1000, null);
+
+        public void sendJsonText(String json) { ws.send(json); }
+
+public void sendFrame(byte[] jpeg) {
+    String b64 = android.util.Base64.encodeToString(jpeg, android.util.Base64.NO_WRAP);
+    sendJsonText("{\"type\":\"frame\",\"botId\":\"" + botId + "\",\"data\":\"" + b64 + "\"}");
+}
     }
 }
