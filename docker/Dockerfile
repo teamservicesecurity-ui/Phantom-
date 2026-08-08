@@ -13,7 +13,7 @@ RUN npm install
 COPY backend/ ./
 RUN npm run build
 
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY docker-entrypoint.sh docker/docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 32766
