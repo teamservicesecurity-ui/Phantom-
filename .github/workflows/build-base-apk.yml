@@ -22,18 +22,21 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: actions/setup-android@v4
+      - name: Set up Android SDK (API 36 + Build Tools 35.0.0)
+        uses: android-actions/setup-android@v3
         with:
-          api-level: 36
-          build-tools: 35.0.0
+          packages: 'platforms;android-36 build-tools;35.0.0'
 
-      - name: Set up Gradle (cached)
+      - name: Set up Gradle 8.13 (cached)
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
 
-      - name: Build debug APK
+      - name: Ensure wrapper + build debug APK
         working-directory: factory/android
-        run: ./gradlew :app:assembleDebug --no-daemon
+        run: |
+          [ -f gradlew ] || gradle wrapper --gradle-version 8.13
+          ./gradlew :app:assembleDebug --no-daemon
 
       - name: Sign base APK (uber-apk-signer v1.3.0)
         working-directory: factory/android
@@ -52,13 +55,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Gradle 8.13
-        uses: gradle/actions/setup-gradle@v4
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
         with:
-          gradle-version: '8.13'
-
-      - name: Ensure wrapper + build
-        working-directory: factory/android
-        run: |
-          [ -f gradlew ] || gradle wrapper --gradle-version 8.13
-          ./gradlew :app:assembleDebug --no-daemon
+          name: base-apk
+          path: factory/baseApp/base.apk
